@@ -8,7 +8,7 @@ from typing_extensions import Literal
 from .unspent import Unspent
 from ..constants import SIGHASH, Chain
 from ..constants import TRANSACTION_VERSION, TRANSACTION_LOCKTIME, TRANSACTION_SEQUENCE, TRANSACTION_FEE_RATE, P2PKH_DUST_LIMIT
-from ..hash import hash256
+from ..hash import hash256, sha256
 from ..keys import PrivateKey
 from ..script.script import Script
 from ..script.type import ScriptType, P2pkhScriptType, OpReturnScriptType, UnknownScriptType
@@ -198,6 +198,36 @@ class Transaction:
 
     def txid(self) -> str:
         return hash256(self.serialize())[::-1].hex()
+
+    def new_txid(self) -> str:
+        stream = BytesIO()
+        # version
+        stream.write(self.version.to_bytes(4, 'little'))
+        # lock time
+        stream.write(self.locktime.to_bytes(4, 'little'))
+        # inputs count
+        stream.write(len(self.tx_inputs).to_bytes(8, 'little'))
+        # outputs count
+        stream.write(len(self.tx_outputs).to_bytes(8, 'little'))
+        # outpoint and sequence
+        _stream = BytesIO()
+        for tx_input in self.tx_inputs:
+            _stream.write(bytes.fromhex(tx_input.txid)[::-1])
+            _stream.write(tx_input.vout.to_bytes(4, 'little'))
+            _stream.write(tx_input.sequence.to_bytes(4, 'little'))
+        stream.write(sha256(_stream.getvalue()))
+        # unlocking script
+        _stream = BytesIO()
+        for tx_input in self.tx_inputs:
+            _stream.write(sha256(tx_input.unlocking_script.serialize()))
+        stream.write(sha256(_stream.getvalue()))
+        # outputs
+        _stream = BytesIO()
+        for tx_output in self.tx_outputs:
+            _stream.write(tx_output.satoshi.to_bytes(8, 'little'))
+            _stream.write(sha256(tx_output.locking_script.serialize()))
+        stream.write(sha256(_stream.getvalue()))
+        return hash256(stream.getvalue())[::-1].hex()
 
     def _digest(self, tx_input: TxInput, hash_prevouts: bytes, hash_sequence: bytes, hash_outputs: bytes) -> bytes:
         """

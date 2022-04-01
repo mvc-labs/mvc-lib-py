@@ -172,3 +172,26 @@ def test_from_hex():
              '00000000'
     t = Transaction.from_hex(raw_tx)
     assert t.txid() == 'e8c6b26f26d90e9cf035762a91479635a75eff2b3b2845663ed72a2397acdfd2'
+
+
+def test_new_txid():
+    t = Transaction.from_hex(
+        '02000000'
+        '03'
+        '1f5c38dfcf6f1a5f5a87c416076d392c87e6d41970d5ad5e477a02d66bde975800000000'
+        '00'
+        'ffffffff'
+        '7cca453133921c50d5025878f7f738d1df891fd359763331935784cf6b9c82bf12000000'
+        '00'
+        'ffffffff'
+        'fccd319e04a996c96cfc0bf4c07539aa90bd0b1a700ef72fae535d6504f9a62201000000'
+        '00'
+        'ffffffff'
+        '02'
+        '80a8120100000000'
+        '1976a9141fc11f39be1729bf973a7ab6a615ca4729d6457488ac'
+        '0084d71700000000'
+        '1976a914f2d4db28cad6502226ee484ae24505c2885cb12d88ac'
+        '00000000'
+    )
+    assert t.new_txid() == 'fd88a01286c89b5cf1d8f239bd2a5133599019b07afce634bd2338cd8020c9bf'
