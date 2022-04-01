@@ -196,7 +196,7 @@ class Transaction:
 
     raw = hex
 
-    def txid(self) -> str:
+    def legacy_txid(self) -> str:
         return hash256(self.serialize())[::-1].hex()
 
     def new_txid(self) -> str:
@@ -228,6 +228,9 @@ class Transaction:
             _stream.write(sha256(tx_output.locking_script.serialize()))
         stream.write(sha256(_stream.getvalue()))
         return hash256(stream.getvalue())[::-1].hex()
+
+    def txid(self) -> str:
+        return self.legacy_txid() if self.version == 1 else self.new_txid()
 
     def _digest(self, tx_input: TxInput, hash_prevouts: bytes, hash_sequence: bytes, hash_outputs: bytes) -> bytes:
         """

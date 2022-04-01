@@ -195,3 +195,4 @@ def test_new_txid():
         '00000000'
     )
     assert t.new_txid() == 'fd88a01286c89b5cf1d8f239bd2a5133599019b07afce634bd2338cd8020c9bf'
+    assert t.txid() == 'fd88a01286c89b5cf1d8f239bd2a5133599019b07afce634bd2338cd8020c9bf'
