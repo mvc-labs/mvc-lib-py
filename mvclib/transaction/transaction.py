@@ -206,9 +206,9 @@ class Transaction:
         # lock time
         stream.write(self.locktime.to_bytes(4, 'little'))
         # inputs count
-        stream.write(len(self.tx_inputs).to_bytes(8, 'little'))
+        stream.write(len(self.tx_inputs).to_bytes(4, 'little'))
         # outputs count
-        stream.write(len(self.tx_outputs).to_bytes(8, 'little'))
+        stream.write(len(self.tx_outputs).to_bytes(4, 'little'))
         # outpoint and sequence
         _stream = BytesIO()
         for tx_input in self.tx_inputs:
@@ -230,7 +230,7 @@ class Transaction:
         return hash256(stream.getvalue())[::-1].hex()
 
     def txid(self) -> str:
-        return self.legacy_txid() if self.version == 1 else self.new_txid()
+        return self.legacy_txid() if self.version < 10 else self.new_txid()
 
     def _digest(self, tx_input: TxInput, hash_prevouts: bytes, hash_sequence: bytes, hash_outputs: bytes) -> bytes:
         """

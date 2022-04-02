@@ -11,4 +11,4 @@ pushdatas = ['hello', b'world']
 t: Transaction = w.create_transaction(outputs=outputs, pushdatas=pushdatas)
 print(t.broadcast())
 print(t.raw())
-print(f'new txid - {t.new_txid()}')
+print(f'newTxid - {t.new_txid()}')
