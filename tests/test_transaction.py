@@ -4,7 +4,7 @@ from mvclib.constants import SIGHASH
 from mvclib.hash import hash256
 from mvclib.keys import Key
 from mvclib.script.script import Script
-from mvclib.script.type import P2pkhScriptType
+from mvclib.script.type import P2pkhScriptType, P2pkScriptType
 from mvclib.transaction.transaction import TxInput, TxOutput, Transaction, TransactionBytesIO
 from mvclib.transaction.unspent import Unspent
 from mvclib.utils import encode_pushdata
@@ -195,3 +195,45 @@ def test_new_txid():
         '00000000'
     )
     assert t.new_txid() == '63e045d471ec78259140d47ba324c3b9c32f31d3cd2c162e042f5cc58b68815a'
+
+
+def test_parse_outputs():
+    k = Key()
+    fake_unspent = Unspent(txid='00' * 32, vout=0, satoshi=3000, private_keys=[k])
+
+    t = Transaction().add_input(fake_unspent)
+    # OP_RETURN
+    out0 = TxOutput(['hello', 'world'])
+    # P2PKH
+    out1 = TxOutput(k.address(), 1000)
+    # P2PK
+    out2 = TxOutput(P2pkScriptType.locking(k.public_key().serialize()), 1000, P2pkScriptType())
+
+    t.add_outputs([out0, out1, out2]).sign()
+    _unspent0 = None
+    _unspent1 = Unspent(txid=t.txid(), vout=1, satoshi=1000)
+    _unspent2 = Unspent(txid=t.txid(), vout=2, satoshi=1000)
+
+    unspent0 = t.to_unspent(0)
+    assert unspent0 is None
+
+    unspent1 = t.to_unspent(1, height=2000)
+    assert unspent1 == _unspent1 and unspent1.script_type == P2pkhScriptType() and unspent1.height == 2000 and unspent1.private_keys == []
+
+    unspent2 = t.to_unspent(2, private_keys=[k])
+    assert unspent2 == _unspent2 and unspent2.script_type == P2pkScriptType() and unspent2.height == -1 and unspent2.private_keys == [k]
+
+    assert t.to_unspents([0]) == []
+
+    unspents1 = t.to_unspents([1], [{'height': 2000}])
+    assert unspents1 == [_unspent1] and unspents1[0].script_type == P2pkhScriptType() and unspents1[0].height == 2000 and unspents1[0].private_keys == []
+
+    unspents21 = t.to_unspents([2, 1], [{'height': 2000}])
+    assert unspents21 == [_unspent2, _unspent1]
+    assert unspents21[0].script_type == P2pkScriptType() and unspents21[0].height == 2000 and unspents21[0].private_keys == []
+    assert unspents21[1].script_type == P2pkhScriptType() and unspents21[1].height == -1 and unspents21[1].private_keys == []
+
+    unspents012 = t.to_unspents(args=[{}, {'height': 2000}, {'private_keys': [k]}])
+    assert unspents012 == [_unspent1, _unspent2]
+    assert unspents012[0].script_type == P2pkhScriptType() and unspents012[0].height == 2000 and unspents012[0].private_keys == []
+    assert unspents012[1].script_type == P2pkScriptType() and unspents012[1].height == -1 and unspents012[1].private_keys == [k]
