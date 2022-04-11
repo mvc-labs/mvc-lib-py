@@ -4,7 +4,7 @@ from typing import Optional, List, Tuple, Union, Dict, Any
 
 from .constants import Chain, THREAD_POOL_MAX_EXECUTORS
 from .keys import PrivateKey
-from .service.provider import Provider
+from .service.provider import Provider, BroadcastResult
 from .service.service import Service
 from .transaction.transaction import Transaction, TxOutput, InsufficientFunds
 from .transaction.unspent import Unspent
@@ -19,12 +19,15 @@ def get_balance_wrapper(chain: Chain, provider: Provider, d: Dict) -> int:
 
 
 class Wallet:
-    def __init__(self, keys: Optional[List[Union[str, int, bytes, PrivateKey]]] = None, chain: Chain = Chain.MAIN, provider: Optional[Provider] = None, **kwargs):
+    def __init__(self, keys: Optional[List[Union[str, int, bytes, PrivateKey]]] = None, chain: Optional[Chain] = None, provider: Optional[Provider] = None, **kwargs):
         """
         create an empty wallet if keys is None
         """
-        self.chain: Chain = chain
+        self.chain: Chain = chain or Chain.MAIN
         self.provider: Provider = provider
+        if self.provider:
+            self.chain = self.provider.chain
+
         self.keys: List[PrivateKey] = []
         if keys:
             self.add_keys(keys)
@@ -120,7 +123,7 @@ class Wallet:
     def send_transaction(self, outputs: Optional[List[Tuple]] = None, leftover: Optional[str] = None,
                          fee_rate: Optional[float] = None, unspents: Optional[List[Unspent]] = None,
                          combine: bool = False, pushdatas: Optional[List[Union[str, bytes]]] = None,
-                         **kwargs) -> Optional[str]:  # pragma: no cover
+                         **kwargs) -> BroadcastResult:  # pragma: no cover
         """send a transaction
         :param outputs: list of tuple (address, satoshi). if None then sweep all the unspents to leftover
         :param leftover: transaction change address

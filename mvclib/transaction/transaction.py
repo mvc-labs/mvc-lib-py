@@ -12,7 +12,7 @@ from ..hash import hash256, sha256
 from ..keys import PrivateKey
 from ..script.script import Script
 from ..script.type import ScriptType, P2pkhScriptType, OpReturnScriptType, UnknownScriptType
-from ..service.provider import Provider
+from ..service.provider import Provider, BroadcastResult
 from ..service.service import Service
 from ..utils import unsigned_to_varint
 
@@ -147,14 +147,18 @@ class Transaction:
 
     def __init__(self, tx_inputs: Optional[List[TxInput]] = None, tx_outputs: Optional[List[TxOutput]] = None,
                  version: int = TRANSACTION_VERSION, locktime: int = TRANSACTION_LOCKTIME, fee_rate: Optional[float] = None,
-                 chain: Chain = Chain.MAIN, provider: Provider = None, **kwargs):
+                 chain: Optional[Chain] = None, provider: Optional[Provider] = None, **kwargs):
         self.tx_inputs: List[TxInput] = tx_inputs or []
         self.tx_outputs: List[TxOutput] = tx_outputs or []
         self.version: int = version
         self.locktime: int = locktime
         self.fee_rate: float = fee_rate if fee_rate is not None else TRANSACTION_FEE_RATE
+
         self.chain: Chain = chain
         self.provider: Provider = provider
+        if self.provider:
+            self.chain = self.provider.chain
+
         self.kwargs: Dict[str, Any] = dict(**kwargs) or {}
 
     def serialize(self) -> bytes:
@@ -386,7 +390,7 @@ class Transaction:
             self.add_output(change_output)
         return self
 
-    def broadcast(self) -> Optional[str]:  # pragma: no cover
+    def broadcast(self) -> BroadcastResult:  # pragma: no cover
         fee_expected = math.ceil(self.fee_rate * self.byte_length())
         if self.fee() < fee_expected:
             raise InsufficientFunds(f'require {self.satoshi_total_out() + fee_expected} satoshi but only {self.satoshi_total_in()}')

@@ -1,10 +1,11 @@
 import pytest
 
-from mvclib.constants import SIGHASH
+from mvclib.constants import SIGHASH, Chain
 from mvclib.hash import hash256
 from mvclib.keys import Key
 from mvclib.script.script import Script
 from mvclib.script.type import P2pkhScriptType, P2pkScriptType
+from mvclib.service import WhatsOnChain, SensibleQuery
 from mvclib.transaction.transaction import TxInput, TxOutput, Transaction, TransactionBytesIO
 from mvclib.transaction.unspent import Unspent
 from mvclib.utils import encode_pushdata
@@ -132,6 +133,7 @@ def test_transaction_bytes_io():
     assert io.read_varint() == int.from_bytes(bytes.fromhex('12345678'), 'little')
     assert io.read_varint() == int.from_bytes(bytes.fromhex('1234567890abcdef'), 'little')
 
+    assert io.read_bytes(0) == b''
     assert io.read_bytes() == bytes.fromhex('00112233')
     assert io.read_bytes() == b''
     assert io.read_bytes(1) == b''
@@ -144,6 +146,12 @@ def test_transaction_bytes_io():
 
 def test_from_hex():
     assert TxInput.from_hex('') is None
+    tx_in = TxInput.from_hex('0011' * 16 + '00112233' + '00' + '00112233')
+    assert tx_in.txid == '1100' * 16
+    assert tx_in.vout == 0x33221100
+    assert tx_in.unlocking_script == Script()
+    assert tx_in.sequence == 0x33221100
+
     assert TxOutput.from_hex('') is None
     assert Transaction.from_hex('') is None
 
@@ -172,6 +180,31 @@ def test_from_hex():
              '00000000'
     t = Transaction.from_hex(raw_tx)
     assert t.txid() == 'e8c6b26f26d90e9cf035762a91479635a75eff2b3b2845663ed72a2397acdfd2'
+
+
+def test_chain_provider():
+    t = Transaction()
+    assert t.chain is None
+    assert t.provider is None
+
+    t = Transaction(chain=Chain.TEST)
+    assert t.chain == Chain.TEST
+    assert t.provider is None
+
+    t = Transaction(provider=WhatsOnChain())
+    assert t.chain == Chain.MAIN
+    assert isinstance(t.provider, WhatsOnChain)
+    assert t.provider.chain == Chain.MAIN
+
+    t = Transaction(chain=Chain.TEST, provider=WhatsOnChain())
+    assert t.chain == Chain.MAIN
+    assert isinstance(t.provider, WhatsOnChain)
+    assert t.provider.chain == Chain.MAIN
+
+    t = Transaction(provider=SensibleQuery(Chain.TEST))
+    assert t.chain == Chain.TEST
+    assert isinstance(t.provider, SensibleQuery)
+    assert t.provider.chain == Chain.TEST
 
 
 def test_new_txid():

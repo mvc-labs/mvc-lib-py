@@ -4,7 +4,7 @@ from typing import List, Dict, Optional
 
 import requests
 
-from .provider import Provider
+from .provider import Provider, BroadcastResult
 from ..constants import Chain
 
 
@@ -36,10 +36,14 @@ class WhatsOnChain(Provider):
             return r.get('confirmed') + r.get('unconfirmed')
         return 0  # pragma: no cover
 
-    def broadcast(self, raw: str) -> Optional[str]:  # pragma: no cover
-        with suppress(Exception):
+    def broadcast(self, raw: str) -> BroadcastResult:  # pragma: no cover
+        propagated, message = False, ''
+        try:
             data = json.dumps({'txHex': raw})
             r = requests.post(f'{self.url}/{self.chain}/tx/raw', headers=self.headers, data=data, timeout=self.timeout)
+            message = r.json()
             r.raise_for_status()
-            return r.json()
-        return None
+            propagated = True
+        except Exception as e:
+            message = message or str(e)
+        return BroadcastResult(propagated, message)

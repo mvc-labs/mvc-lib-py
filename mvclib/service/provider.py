@@ -1,10 +1,13 @@
 from abc import ABCMeta, abstractmethod
+from collections import namedtuple
 from typing import List, Dict, Optional, Tuple, Union
 
 import requests
 
 from ..constants import Chain, HTTP_REQUEST_TIMEOUT
 from ..keys import PublicKey, PrivateKey
+
+BroadcastResult = namedtuple('BroadcastResult', 'propagated data')
 
 
 class Provider(metaclass=ABCMeta):
@@ -52,8 +55,8 @@ class Provider(metaclass=ABCMeta):
         raise NotImplementedError('Provider.get_balance')
 
     @abstractmethod
-    def broadcast(self, raw: str) -> Optional[str]:
+    def broadcast(self, raw: str) -> BroadcastResult:
         """
-        :returns: txid if broadcast successfully otherwise None
+        :returns: (True, txid) or (False, error_message)
         """
         raise NotImplementedError('Provider.broadcast')

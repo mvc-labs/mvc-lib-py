@@ -4,13 +4,14 @@ from typing import Optional, List, Dict, Union
 
 import requests
 
-from .provider import Provider
+from .provider import Provider, BroadcastResult
 from ..constants import Chain, METASV_TOKEN
 
 
 class MetaSV(Provider):  # pragma: no cover
 
-    def __init__(self, token: Optional[str] = None, headers: Optional[Dict] = None, timeout: Optional[int] = None):
+    def __init__(self, chain: Chain = Chain.MAIN, headers: Optional[Dict] = None, timeout: Optional[int] = None, token: Optional[str] = None):
+        assert chain == Chain.MAIN, 'MetaSV service only supports Chain.MAIN'
         super().__init__(Chain.MAIN, headers, timeout)
         self.token = token or METASV_TOKEN
         assert self.token, 'MetaSV service requires a token'
@@ -53,10 +54,19 @@ class MetaSV(Provider):  # pragma: no cover
             return r.get('confirmed') + r.get('unconfirmed')
         return 0
 
-    def broadcast(self, raw: str) -> Optional[str]:
-        with suppress(Exception):
+    def broadcast(self, raw: str) -> BroadcastResult:
+        propagated, message = False, ''
+        try:
             data = json.dumps({'hex': raw})
-            r = requests.post(f'{self.url}/tx/broadcast', headers=self.headers, data=data, timeout=self.timeout)
-            r.raise_for_status()
-            return r.json()['txid']
-        return None
+            _r = requests.post(f'{self.url}/tx/broadcast', headers=self.headers, data=data, timeout=self.timeout)
+            _r.raise_for_status()
+
+            r = _r.json()
+            assert r, f'empty response {r}'
+            if r.get('txid'):
+                propagated, message = True, r['txid']
+            else:
+                propagated, message = False, r.get('message')
+        except Exception as e:
+            message = message or str(e)
+        return BroadcastResult(propagated, message)
