@@ -98,8 +98,6 @@ def test_transaction():
     t.tx_inputs[0].sighash = SIGHASH.SINGLE_ANYONECANPAY_FORKID
     assert t.digest(0) == t._digest(t.tx_inputs[0], b'\x00' * 32, b'\x00' * 32, hash256(t.tx_outputs[0].serialize()))
 
-    with pytest.raises(ValueError, match=r"can't estimate byte length"):
-        t.estimated_fee()
     t.tx_inputs[0].private_keys = [Key('L5agPjZKceSTkhqZF2dmFptT5LFrbr6ZGPvP7u4A6dvhTrr71WZ9')]
     assert t.estimated_fee() == 96
 
@@ -270,3 +268,22 @@ def test_parse_outputs():
     assert unspents012 == [_unspent1, _unspent2]
     assert unspents012[0].script_type == P2pkhScriptType() and unspents012[0].height == 2000 and unspents012[0].private_keys == []
     assert unspents012[1].script_type == P2pkScriptType() and unspents012[1].height == -1 and unspents012[1].private_keys == [k]
+
+
+def test_estimated_byte_length():
+    _in = TxInput()
+    _in.script_type = P2pkhScriptType()
+    _in.satoshi = 2000
+
+    _out = TxOutput(Key().address(), 1000)
+
+    t = Transaction().add_input(_in).add_output(_out)
+
+    with pytest.raises(ValueError, match=r"can't estimate byte length"):
+        t.estimated_byte_length()
+
+    _in.private_keys = [Key()]
+    assert t.estimated_byte_length() == 192
+
+    _in.unlocking_script = b''
+    assert t.estimated_byte_length() == 85
