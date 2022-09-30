@@ -5,7 +5,7 @@ from typing import Dict, List, Optional
 TRANSACTION_SEQUENCE: int = int(os.getenv('MVCLIB_TRANSACTION_SEQUENCE') or 0xffffffff)
 TRANSACTION_VERSION: int = int(os.getenv('MVCLIB_TRANSACTION_VERSION') or 1)
 TRANSACTION_LOCKTIME: int = int(os.getenv('MVCLIB_TRANSACTION_LOCKTIME') or 0)
-TRANSACTION_FEE_RATE: float = float(os.getenv('MVCLIB_TRANSACTION_FEE_RATE') or 0.5)  # satoshi per byte
+TRANSACTION_FEE_RATE: float = float(os.getenv('MVCLIB_TRANSACTION_FEE_RATE') or 1)  # satoshi per byte
 P2PKH_DUST_LIMIT: int = int(os.getenv('MVCLIB_P2PKH_DUST_LIMIT') or 135)
 HTTP_REQUEST_TIMEOUT: int = int(os.getenv('MVCLIB_HTTP_REQUEST_TIMEOUT') or 30)
 THREAD_POOL_MAX_EXECUTORS: int = int(os.getenv('MVCLIB_THREAD_POOL_MAX_EXECUTORS') or 10)
