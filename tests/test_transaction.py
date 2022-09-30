@@ -5,7 +5,7 @@ from mvclib.hash import hash256
 from mvclib.keys import Key
 from mvclib.script.script import Script
 from mvclib.script.type import P2pkhScriptType, P2pkScriptType
-from mvclib.service import WhatsOnChain, SensibleQuery
+from mvclib.service import MetaSV
 from mvclib.transaction.transaction import TxInput, TxOutput, Transaction, TransactionBytesIO
 from mvclib.transaction.unspent import Unspent
 from mvclib.utils import encode_pushdata
@@ -189,19 +189,9 @@ def test_chain_provider():
     assert t.chain == Chain.TEST
     assert t.provider is None
 
-    t = Transaction(provider=WhatsOnChain())
-    assert t.chain == Chain.MAIN
-    assert isinstance(t.provider, WhatsOnChain)
-    assert t.provider.chain == Chain.MAIN
-
-    t = Transaction(chain=Chain.TEST, provider=WhatsOnChain())
-    assert t.chain == Chain.MAIN
-    assert isinstance(t.provider, WhatsOnChain)
-    assert t.provider.chain == Chain.MAIN
-
-    t = Transaction(provider=SensibleQuery(Chain.TEST))
+    t = Transaction(provider=MetaSV(Chain.TEST))
     assert t.chain == Chain.TEST
-    assert isinstance(t.provider, SensibleQuery)
+    assert isinstance(t.provider, MetaSV)
     assert t.provider.chain == Chain.TEST
 
 

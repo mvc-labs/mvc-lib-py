@@ -2,7 +2,6 @@ from typing import List, Dict, Optional
 
 from .metasv import MetaSV
 from .provider import Provider, BroadcastResult
-from .whatsonchain import WhatsOnChain
 from ..constants import Chain, METASV_TOKEN
 
 
@@ -10,7 +9,7 @@ class Service:
 
     def __init__(self, chain: Optional[Chain] = None, provider: Optional[Provider] = None):
         chain = chain or Chain.MAIN
-        default_provider = MetaSV(token=METASV_TOKEN) if chain == Chain.MAIN and METASV_TOKEN else WhatsOnChain(chain)
+        default_provider = MetaSV(chain=chain, token=METASV_TOKEN)
         self.provider = provider or default_provider
         self.chain = self.provider.chain
 

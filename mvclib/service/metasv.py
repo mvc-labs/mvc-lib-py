@@ -11,11 +11,12 @@ from ..constants import Chain, METASV_TOKEN
 class MetaSV(Provider):  # pragma: no cover
 
     def __init__(self, chain: Chain = Chain.MAIN, headers: Optional[Dict] = None, timeout: Optional[int] = None, token: Optional[str] = None):
-        assert chain == Chain.MAIN, 'MetaSV service only supports Chain.MAIN'
-        super().__init__(Chain.MAIN, headers, timeout)
+        assert chain == Chain.TEST, 'MetaSV service now only supports Chain.TEST'
+        super().__init__(chain, headers, timeout)
         self.token = token or METASV_TOKEN
-        assert self.token, 'MetaSV service requires a token'
-        self.url = 'https://apiv2.metasv.com'
+        # no need for token just now
+        assert self.token or True, 'MetaSV service requires a token'
+        self.url = 'https://api-mvc-testnet.metasv.com'
         self.headers.update({'Authorization': f'Bearer {self.token}', })
 
     def _get_unspents(self, address: str, flag: Optional[str] = None) -> Union[Dict, List[Dict]]:

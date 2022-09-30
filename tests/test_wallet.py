@@ -1,8 +1,7 @@
 from mvclib.constants import Chain
 from mvclib.keys import Key
 from mvclib.script.type import P2pkScriptType
-from mvclib.service.sensiblequery import SensibleQuery
-from mvclib.service.whatsonchain import WhatsOnChain
+from mvclib.service import MetaSV
 from mvclib.wallet import Wallet
 
 
@@ -15,29 +14,19 @@ def test_chain_provider():
     assert w.chain == Chain.TEST
     assert w.provider is None
 
-    w = Wallet(provider=WhatsOnChain())
-    assert w.chain == Chain.MAIN
-    assert isinstance(w.provider, WhatsOnChain)
-    assert w.provider.chain == Chain.MAIN
-
-    w = Wallet(chain=Chain.TEST, provider=WhatsOnChain())
-    assert w.chain == Chain.MAIN
-    assert isinstance(w.provider, WhatsOnChain)
-    assert w.provider.chain == Chain.MAIN
-
-    w = Wallet(provider=SensibleQuery(Chain.TEST))
+    w = Wallet(provider=MetaSV(Chain.TEST))
     assert w.chain == Chain.TEST
-    assert isinstance(w.provider, SensibleQuery)
+    assert isinstance(w.provider, MetaSV)
     assert w.provider.chain == Chain.TEST
 
 
 def test():
-    p1 = Key('L5agPjZKceSTkhqZF2dmFptT5LFrbr6ZGPvP7u4A6dvhTrr71WZ9')
-    p2 = Key('5KiANv9EHEU4o9oLzZ6A7z4xJJ3uvfK2RLEubBtTz1fSwAbpJ2U')
+    p1 = Key('cT6HWfEFaYtaZiPqaBr7CrN8z346ns13G6Mo6sgWZN82XuibXbzJ')
+    p2 = Key('cQKZWZsXGX1MTwmmYW9FYQdAJ9wwnQPo9gEDARSCHewuRxyHFFRo')
 
-    w1 = Wallet(provider=WhatsOnChain()).add_key(p1).add_key(p2)
-    w2 = Wallet(provider=SensibleQuery()).add_keys([p1, p2])
-    w3 = Wallet([p1, p2])
+    w1 = Wallet(chain=Chain.TEST).add_key(p1).add_key(p2)
+    w2 = Wallet(chain=Chain.TEST).add_keys([p1, p2])
+    w3 = Wallet(keys=[p1, p2], chain=Chain.TEST)
 
     assert w1.get_keys() == w2.get_keys()
     assert w1.get_keys() == w3.get_keys()
