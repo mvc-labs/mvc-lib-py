@@ -98,8 +98,12 @@ def test_transaction():
     t.tx_inputs[0].sighash = SIGHASH.SINGLE_ANYONECANPAY_FORKID
     assert t.digest(0) == t._digest(t.tx_inputs[0], b'\x00' * 32, b'\x00' * 32, hash256(t.tx_outputs[0].serialize()))
 
+    # unlocking script is already set
+    assert t.estimated_fee() == 191
+    # remove the unlocking script
+    t.tx_inputs[0].unlocking_script = None
     t.tx_inputs[0].private_keys = [Key('L5agPjZKceSTkhqZF2dmFptT5LFrbr6ZGPvP7u4A6dvhTrr71WZ9')]
-    assert t.estimated_fee() == 96
+    assert t.estimated_fee() == 192
 
     t.add_change()
     # nothing happened
@@ -107,16 +111,16 @@ def test_transaction():
 
     t.tx_outputs[0].satoshi = 100
     t.add_change(address)
-    # 1-2 transaction 226 bytes --> fee 113 satoshi --> 787 left
+    # 1-2 transaction 226 bytes --> fee 226 satoshi --> 674 left
     assert len(t.tx_outputs) == 2
     assert t.tx_outputs[1].locking_script == P2pkhScriptType.locking(address)
-    assert t.tx_outputs[1].satoshi == 787
+    assert t.tx_outputs[1].satoshi == 674
 
     t.tx_outputs.pop()
     t.add_change()
     assert len(t.tx_outputs) == 2
     assert t.tx_outputs[1].locking_script == P2pkhScriptType.locking(address)
-    assert t.tx_outputs[1].satoshi == 787
+    assert t.tx_outputs[1].satoshi == 674
 
 
 def test_transaction_bytes_io():
