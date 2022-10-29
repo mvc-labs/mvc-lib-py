@@ -1,10 +1,14 @@
 from mvclib.constants import Chain
-from mvclib.service.metasv import MetaSV
+from mvclib.service import Service, MetaSV
 
 
 def test_metasv():
-    service = MetaSV(chain=Chain.TEST)
+    provider = MetaSV(chain=Chain.TEST)
+
+    s = Service(provider=provider)
+    assert s.chain == provider.chain
+
     address = 'n27R7XNdewipj7hQct4bt6po1nsbVgVJGu'
-    unspents = service.get_unspents(address=address)
-    balance = service.get_balance(address=address)
+    unspents = provider.get_unspents(address=address)
+    balance = provider.get_balance(address=address)
     assert sum([unspent['satoshi'] for unspent in unspents]) == balance
