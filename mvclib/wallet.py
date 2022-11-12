@@ -3,9 +3,10 @@ from itertools import repeat
 from typing import Optional, List, Tuple, Union, Dict, Any
 
 from .constants import Chain, THREAD_POOL_MAX_EXECUTORS
+from .hd import Xprv
 from .keys import PrivateKey
 from .service.provider import Provider
-from .service.service import Service
+from .service.service import Service, MetaSV
 from .transaction.transaction import Transaction, TxOutput, InsufficientFunds
 from .transaction.unspent import Unspent
 
@@ -128,3 +129,42 @@ def create_transaction(unspents: List[Unspent], outputs: Optional[List[Tuple]] =
     if sign:
         t.sign()
     return t
+
+
+class WalletLite:  # pragma: no cover
+    def __init__(self, xprv: Union[Xprv, str, bytes], **kwargs):
+        self.xprv = xprv if type(xprv) is Xprv else Xprv(xprv)
+        assert self.xprv, 'bad xprv'
+        self.chain: Chain = self.xprv.chain
+        self.provider: MetaSV = MetaSV(chain=self.chain)
+        self.unspents: List[Unspent] = []
+        self.kwargs: Dict[str, Any] = dict(**kwargs) or {}
+
+    def get_unspents(self, refresh: bool = False, **kwargs) -> List[Unspent]:
+        if refresh:
+            unspents = self.provider.get_xpub_unspents(xprv=self.xprv, **{**self.kwargs, **kwargs})
+            self.unspents = [Unspent(**unspent) for unspent in unspents]
+        return self.unspents
+
+    def get_balance(self, refresh: bool = False, **kwargs) -> int:
+        if refresh:
+            return self.provider.get_xpub_balance(xprv=self.xprv, **{**self.kwargs, **kwargs})
+        return sum([unspent.satoshi for unspent in self.unspents])
+
+    def create_transaction(self, unspents: Optional[List[Unspent]] = None, outputs: Optional[List[Tuple]] = None,
+                           leftover: Optional[str] = None, fee_rate: Optional[float] = None,
+                           combine: bool = False, pushdatas: Optional[List[Union[str, bytes]]] = None,
+                           change: bool = True, sign: bool = True, **kwargs) -> Transaction:
+        """create a transaction
+        :param unspents: list of unspents, will refresh from service if None
+        :param outputs: list of tuple (address, satoshi). if None then sweep all the unspents to leftover
+        :param leftover: transaction change address
+        :param fee_rate: default fee rate if None
+        :param combine: use all available unspents if True
+        :param pushdatas: list of OP_RETURN pushdata
+        :param change: automatically add a P2PKH change output if True
+        :param sign: sign the transaction if True
+        :param kwargs: passing to get unspents and create transaction
+        """
+        unspents: List[Unspent] = unspents or self.get_unspents(refresh=True, **{**self.kwargs, **kwargs})
+        return create_transaction(unspents, outputs, leftover, fee_rate, combine, pushdatas, change, sign, self.chain, self.provider, **{**self.kwargs, **kwargs})

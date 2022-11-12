@@ -6,6 +6,7 @@ import requests
 
 from .provider import Provider, BroadcastResult
 from ..constants import Chain, METASV_TOKEN
+from ..hd import Xprv, Xpub
 
 
 class MetaSV(Provider):  # pragma: no cover
@@ -71,3 +72,30 @@ class MetaSV(Provider):  # pragma: no cover
         except Exception as e:
             message = message or str(e)
         return BroadcastResult(propagated, message)
+
+    def get_xpub_unspents(self, **kwargs) -> List[Dict]:
+        """
+        only P2PKH unspents
+        """
+        with suppress(Exception):
+            xprv: Xprv = kwargs.get('xprv') or None
+            xpub: Xpub = kwargs.get('xpub') or (xprv.xpub() if xprv else None)
+            r: Dict = self.get(url=f'{self.url}/xpubLite/{xpub}/utxo')
+            unspents: List[Dict] = []
+            for item in r:
+                unspent = {'txid': item['txid'], 'vout': item['txIndex'], 'satoshi': item['value'], 'height': item['height']}
+                unspent.update(kwargs)
+                if xprv:
+                    # update private key
+                    unspent.update({'private_keys': [xprv.ckd(item['addressType']).ckd(item['addressIndex']).private_key()]})
+                unspents.append(unspent)
+            return unspents
+        return []
+
+    def get_xpub_balance(self, **kwargs) -> int:
+        with suppress(Exception):
+            xprv: Xprv = kwargs.get('xprv') or None
+            xpub: Xpub = kwargs.get('xpub') or (xprv.xpub() if xprv else None)
+            r: Dict = self.get(url=f'{self.url}/xpubLite/{xpub}/balance')
+            return r.get('balance')
+        return 0
