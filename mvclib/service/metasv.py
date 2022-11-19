@@ -1,24 +1,28 @@
+import base64
 import json
+import random
+import time
 from contextlib import suppress
-from typing import Optional, List, Dict, Union
+from typing import Optional, List, Dict, Union, Tuple
 
 import requests
 
 from .provider import Provider, BroadcastResult
-from ..constants import Chain, METASV_TOKEN
+from ..constants import Chain, METASV_TOKEN, METASV_CLIENT_KEY
+from ..hash import sha256
 from ..hd import Xprv, Xpub
+from ..keys import Key
 
 
 class MetaSV(Provider):  # pragma: no cover
 
-    def __init__(self, chain: Chain = Chain.MAIN, headers: Optional[Dict] = None, timeout: Optional[int] = None, token: Optional[str] = None):
+    def __init__(self, chain: Chain = Chain.MAIN, url: Optional[str] = None, headers: Optional[Dict] = None,
+                 timeout: Optional[int] = None, token: Optional[str] = None, client_key: Optional[str] = None):
         assert chain == Chain.TEST, 'MetaSV service now only supports Chain.TEST'
+        self.url = url or 'https://api-mvc-testnet.metasv.com'
         super().__init__(chain, headers, timeout)
         self.token = token or METASV_TOKEN
-        # no need for token just now
-        assert self.token or True, 'MetaSV service requires a token'
-        self.url = 'https://api-mvc-testnet.metasv.com'
-        self.headers.update({'Authorization': f'Bearer {self.token}', })
+        self.client_key = client_key or METASV_CLIENT_KEY
 
     def _get_unspents(self, address: str, flag: Optional[str] = None) -> Union[Dict, List[Dict]]:
         with suppress(Exception):
@@ -73,14 +77,40 @@ class MetaSV(Provider):  # pragma: no cover
             message = message or str(e)
         return BroadcastResult(propagated, message)
 
+    def _headers(self, path: str) -> Dict:
+        if self.token:
+            return {**self.headers, **{'Authorization': f'Bearer {self.token}', }}
+        elif self.client_key:
+            k = Key(self.client_key)
+            timestamp = str(int(time.time() * 1000))
+            nonce = ''.join(str(random.choice(range(10))) for _ in range(10))
+            message = f'{path}_{timestamp}_{nonce}'.encode('utf-8')
+            sig = base64.b64encode(k.sign(message=message, hasher=sha256))
+            return {**self.headers, **{
+                'MetaSV-Timestamp': timestamp, 'MetaSV-Nonce': nonce,
+                'MetaSV-Client-Pubkey': k.public_key().hex(), 'MetaSV-Signature': sig,
+            }}
+        else:
+            return self.headers
+
+    @classmethod
+    def _parse_xkey(cls, **kwargs) -> Tuple[Optional[Xpub], Optional[Xprv]]:
+        """
+        try to parse out (xpub, xprv) from kwargs
+        """
+        xprv: Xprv = kwargs.get('xprv') or None
+        xpub: Xpub = kwargs.get('xpub') or (xprv.xpub() if xprv else None)
+        return xpub, xprv
+
     def get_xpub_unspents(self, **kwargs) -> List[Dict]:
         """
         only P2PKH unspents
         """
+        assert self.token or self.client_key, 'MetaSV service requires a token or a client key'
         with suppress(Exception):
-            xprv: Xprv = kwargs.get('xprv') or None
-            xpub: Xpub = kwargs.get('xpub') or (xprv.xpub() if xprv else None)
-            r: Dict = self.get(url=f'{self.url}/xpubLite/{xpub}/utxo')
+            xpub, xprv = MetaSV._parse_xkey(**kwargs)
+            path = f'/xpubLite/{xpub}/utxo'
+            r: Dict = self.get(url=f'{self.url}{path}', headers=self._headers(path))
             unspents: List[Dict] = []
             for item in r:
                 unspent = {'txid': item['txid'], 'vout': item['txIndex'], 'satoshi': item['value'], 'height': item['height']}
@@ -93,9 +123,10 @@ class MetaSV(Provider):  # pragma: no cover
         return []
 
     def get_xpub_balance(self, **kwargs) -> int:
+        assert self.token or self.client_key, 'MetaSV service requires a token or a client key'
         with suppress(Exception):
-            xprv: Xprv = kwargs.get('xprv') or None
-            xpub: Xpub = kwargs.get('xpub') or (xprv.xpub() if xprv else None)
-            r: Dict = self.get(url=f'{self.url}/xpubLite/{xpub}/balance')
+            xpub, xprv = MetaSV._parse_xkey(**kwargs)
+            path = f'/xpubLite/{xpub}/balance'
+            r: Dict = self.get(url=f'{self.url}{path}', headers=self._headers(path))
             return r.get('balance')
         return 0

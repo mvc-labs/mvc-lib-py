@@ -2,7 +2,7 @@ from typing import List, Dict, Optional
 
 from .metasv import MetaSV
 from .provider import Provider, BroadcastResult
-from ..constants import Chain, METASV_TOKEN
+from ..constants import Chain
 
 
 class Service:
@@ -12,7 +12,7 @@ class Service:
             self.provider = provider
         else:
             chain = chain or Chain.MAIN
-            self.provider = MetaSV(chain=chain, token=METASV_TOKEN)
+            self.provider = MetaSV(chain=chain)
         self.chain = self.provider.chain
 
     def get_unspents(self, **kwargs) -> List[Dict]:
