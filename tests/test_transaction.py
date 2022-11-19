@@ -234,7 +234,6 @@ def test_parse_outputs():
     out2 = TxOutput(P2pkScriptType.locking(k.public_key().serialize()), 1000, P2pkScriptType())
 
     t.add_outputs([out0, out1, out2]).sign()
-    _unspent0 = None
     _unspent1 = Unspent(txid=t.txid(), vout=1, satoshi=1000)
     _unspent2 = Unspent(txid=t.txid(), vout=2, satoshi=1000)
 
