@@ -1,21 +1,16 @@
 from mvclib import WalletLite
 from mvclib.constants import Chain
 from mvclib.hd import derive_xprv_from_mnemonic, derive_xprvs_from_mnemonic
-from mvclib.service import MetaSV
 
 mnemonic = 'purchase upon spell inch cool remove depart amateur glass wheel seek royal'
-path = "m/44'/10001'/0'"
 chain = Chain.TEST
 
-token = ''  # <-- your token here
-provider = MetaSV(chain=chain, token=token)
-
-xprv = derive_xprv_from_mnemonic(mnemonic=mnemonic, path=path, chain=chain)
-xkeys = derive_xprvs_from_mnemonic(mnemonic=mnemonic, path=path, chain=chain, index_start=0, index_end=3)
+xprv = derive_xprv_from_mnemonic(mnemonic=mnemonic, chain=chain)
+xkeys = derive_xprvs_from_mnemonic(mnemonic=mnemonic, chain=chain, index_start=0, index_end=3)
 for xkey in xkeys:
     print(xkey.address())
 
-w = WalletLite(xprv)
+w = WalletLite(xprv, token='', client_key='')  # <-- set your MetaSV token or client key here
 
 print('-------- refresh unspents --------')
 for unspent in w.get_unspents(refresh=True):

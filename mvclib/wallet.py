@@ -136,7 +136,7 @@ class WalletLite:  # pragma: no cover
         self.xprv = xprv if type(xprv) is Xprv else Xprv(xprv)
         assert self.xprv, 'bad xprv'
         self.chain: Chain = self.xprv.chain
-        self.provider: MetaSV = MetaSV(chain=self.chain)
+        self.provider: MetaSV = MetaSV(chain=self.chain, **kwargs)
         self.unspents: List[Unspent] = []
         self.kwargs: Dict[str, Any] = dict(**kwargs) or {}
 
