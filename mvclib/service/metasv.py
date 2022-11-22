@@ -36,7 +36,7 @@ class MetaSV(Provider):  # pragma: no cover
         """
         only P2PKH unspents
         """
-        with suppress(Exception):
+        try:
             address, _, _ = self.parse_kwargs(**kwargs)
             # paging
             paged_unspents: List[Dict] = self._get_unspents(address)
@@ -51,13 +51,19 @@ class MetaSV(Provider):  # pragma: no cover
                 unspent.update(kwargs)
                 unspents.append(unspent)
             return unspents
+        except Exception as e:
+            if kwargs.get('throw'):
+                raise e
         return []
 
     def get_balance(self, **kwargs) -> int:
-        with suppress(Exception):
+        try:
             address, _, _ = self.parse_kwargs(**kwargs)
             r: Dict = self.get(url=f'{self.url}/address/{address}/balance')
             return r.get('confirmed') + r.get('unconfirmed')
+        except Exception as e:
+            if kwargs.get('throw'):
+                raise e
         return 0
 
     def broadcast(self, raw: str) -> BroadcastResult:
@@ -66,7 +72,6 @@ class MetaSV(Provider):  # pragma: no cover
             data = json.dumps({'hex': raw})
             _r = requests.post(f'{self.url}/tx/broadcast', headers=self.headers, data=data, timeout=self.timeout)
             _r.raise_for_status()
-
             r = _r.json()
             assert r, f'empty response {r}'
             if r.get('txid'):
@@ -77,7 +82,7 @@ class MetaSV(Provider):  # pragma: no cover
             message = message or str(e)
         return BroadcastResult(propagated, message)
 
-    def _headers(self, path: str) -> Dict:
+    def parse_headers(self, path: str) -> Dict:
         if self.token:
             return {**self.headers, **{'Authorization': f'Bearer {self.token}', }}
         elif self.client_key:
@@ -107,10 +112,10 @@ class MetaSV(Provider):  # pragma: no cover
         only P2PKH unspents
         """
         assert self.token or self.client_key, 'MetaSV service requires a token or a client key'
-        with suppress(Exception):
+        try:
             xpub, xprv = MetaSV._parse_xkey(**kwargs)
             path = f'/xpubLite/{xpub}/utxo'
-            r: Dict = self.get(url=f'{self.url}{path}', headers=self._headers(path))
+            r: Dict = self.get(url=f'{self.url}{path}', headers=self.parse_headers(path))
             unspents: List[Dict] = []
             for item in r:
                 unspent = {'txid': item['txid'], 'vout': item['txIndex'], 'satoshi': item['value'], 'height': item['height']}
@@ -120,13 +125,19 @@ class MetaSV(Provider):  # pragma: no cover
                     unspent.update({'private_keys': [xprv.ckd(item['addressType']).ckd(item['addressIndex']).private_key()]})
                 unspents.append(unspent)
             return unspents
+        except Exception as e:
+            if kwargs.get('throw'):
+                raise e
         return []
 
     def get_xpub_balance(self, **kwargs) -> int:
         assert self.token or self.client_key, 'MetaSV service requires a token or a client key'
-        with suppress(Exception):
+        try:
             xpub, xprv = MetaSV._parse_xkey(**kwargs)
             path = f'/xpubLite/{xpub}/balance'
-            r: Dict = self.get(url=f'{self.url}{path}', headers=self._headers(path))
+            r: Dict = self.get(url=f'{self.url}{path}', headers=self.parse_headers(path))
             return r.get('balance')
+        except Exception as e:
+            if kwargs.get('throw'):
+                raise e
         return 0
