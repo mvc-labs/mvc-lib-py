@@ -33,9 +33,6 @@ class MetaSV(Provider):  # pragma: no cover
         return []
 
     def get_unspents(self, **kwargs) -> List[Dict]:
-        """
-        only P2PKH unspents
-        """
         try:
             address, _, _ = self.parse_kwargs(**kwargs)
             # paging
@@ -108,9 +105,6 @@ class MetaSV(Provider):  # pragma: no cover
         return xpub, xprv
 
     def get_xpub_unspents(self, **kwargs) -> List[Dict]:
-        """
-        only P2PKH unspents
-        """
         assert self.token or self.client_key, 'MetaSV service requires a token or a client key'
         try:
             xpub, xprv = MetaSV._parse_xkey(**kwargs)
