@@ -116,7 +116,7 @@ class MetaSV(Provider):  # pragma: no cover
                 if xprv:
                     # update private key
                     unspent.update({'private_keys': [xprv.ckd(item['addressType']).ckd(item['addressIndex']).private_key()]})
-                unspents.append(**{**item, **kwargs, **unspent})
+                unspents.append({**item, **kwargs, **unspent})
             return unspents
         except Exception as e:
             if kwargs.get('throw'):
