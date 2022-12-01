@@ -112,12 +112,11 @@ class MetaSV(Provider):  # pragma: no cover
             r: Dict = self.get(url=f'{self.url}{path}', headers=self.parse_headers(path))
             unspents: List[Dict] = []
             for item in r:
-                unspent = {'txid': item['txid'], 'vout': item['txIndex'], 'satoshi': item['value'], 'height': item['height']}
-                unspent.update(kwargs)
+                unspent = {'vout': item['txIndex'], 'satoshi': item['value']}
                 if xprv:
                     # update private key
                     unspent.update({'private_keys': [xprv.ckd(item['addressType']).ckd(item['addressIndex']).private_key()]})
-                unspents.append(unspent)
+                unspents.append(**{**item, **kwargs, **unspent})
             return unspents
         except Exception as e:
             if kwargs.get('throw'):
