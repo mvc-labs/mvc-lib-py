@@ -386,8 +386,10 @@ class Transaction:
         if fee_overpaid >= P2PKH_DUST_LIMIT:
             change_output: Optional[TxOutput] = None
             if not change_address:
-                if self.tx_inputs:  # pragma: no cover
-                    change_output = TxOutput(out=self.tx_inputs[0].locking_script, satoshi=fee_overpaid)
+                for tx_input in self.tx_inputs:  # pragma: no cover
+                    if tx_input.script_type == P2pkhScriptType():
+                        change_output = TxOutput(out=tx_input.locking_script, satoshi=fee_overpaid, script_type=P2pkhScriptType())
+                        break
             else:
                 change_output = TxOutput(out=change_address, satoshi=fee_overpaid)
             assert change_output, "can't parse any address from transaction inputs"
