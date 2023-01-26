@@ -18,8 +18,11 @@ class MetaSV(Provider):  # pragma: no cover
 
     def __init__(self, chain: Chain = Chain.MAIN, url: Optional[str] = None, headers: Optional[Dict] = None,
                  timeout: Optional[int] = None, token: Optional[str] = None, client_key: Optional[str] = None):
-        assert chain == Chain.TEST, 'MetaSV service now only supports Chain.TEST'
-        self.url = url or 'https://api-mvc-testnet.metasv.com'
+        if chain == Chain.MAIN:
+            default_url = 'https://api-mvc.metasv.com'
+        else:
+            default_url = 'https://api-mvc-testnet.metasv.com'
+        self.url = url or default_url
         super().__init__(chain, headers, timeout)
         self.token = token or METASV_TOKEN
         self.client_key = client_key or METASV_CLIENT_KEY
