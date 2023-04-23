@@ -1,7 +1,7 @@
 from mvclib.constants import Chain
 from mvclib.keys import Key
 from mvclib.script.type import P2pkScriptType
-from mvclib.service import MetaSV
+from mvclib.service import MvcApi
 from mvclib.wallet import Wallet
 
 
@@ -14,9 +14,9 @@ def test_chain_provider():
     assert w.chain == Chain.TEST
     assert w.provider is None
 
-    w = Wallet(provider=MetaSV(Chain.TEST))
+    w = Wallet(provider=MvcApi(Chain.TEST))
     assert w.chain == Chain.TEST
-    assert isinstance(w.provider, MetaSV)
+    assert isinstance(w.provider, MvcApi)
     assert w.provider.chain == Chain.TEST
 
 

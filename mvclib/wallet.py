@@ -6,7 +6,7 @@ from .constants import Chain, THREAD_POOL_MAX_EXECUTORS
 from .hd import Xprv
 from .keys import PrivateKey
 from .service.provider import Provider
-from .service.service import Service, MetaSV
+from .service.service import Service, MvcApi
 from .transaction.transaction import Transaction, TxOutput, InsufficientFunds
 from .transaction.unspent import Unspent
 
@@ -136,7 +136,7 @@ class WalletLite:  # pragma: no cover
         self.xprv = xprv if type(xprv) is Xprv else Xprv(xprv)
         assert self.xprv, 'bad xprv'
         self.chain: Chain = self.xprv.chain
-        self.provider: MetaSV = MetaSV(chain=self.chain, **kwargs)
+        self.provider: MvcApi = MvcApi(chain=self.chain, **kwargs)
         self.unspents: List[Unspent] = []
         self.kwargs: Dict[str, Any] = dict(**kwargs) or {}
 

@@ -1,9 +1,9 @@
 from mvclib.constants import Chain
-from mvclib.service import Service, MetaSV
+from mvclib.service import Service, MvcApi
 
 
-def test_metasv():
-    provider = MetaSV(chain=Chain.TEST)
+def test_mvcapi():
+    provider = MvcApi(chain=Chain.TEST)
 
     s = Service(provider=provider)
     assert s.chain == provider.chain

@@ -10,7 +10,7 @@ xkeys = derive_xprvs_from_mnemonic(mnemonic=mnemonic, chain=chain, index_start=0
 for xkey in xkeys:
     print(xkey.address())
 
-w = WalletLite(xprv, token='', client_key='')  # <-- set your MetaSV token or client key here
+w = WalletLite(xprv, token='', client_key='')  # <-- set your token or client key here
 
 print('-------- refresh unspents --------')
 for unspent in w.get_unspents(refresh=True):

@@ -8,24 +8,24 @@ from typing import Optional, List, Dict, Union, Tuple
 import requests
 
 from .provider import Provider, BroadcastResult
-from ..constants import Chain, METASV_TOKEN, METASV_CLIENT_KEY
+from ..constants import Chain, MVCAPI_TOKEN, MVCAPI_CLIENT_KEY
 from ..hash import sha256
 from ..hd import Xprv, Xpub
 from ..keys import Key
 
 
-class MetaSV(Provider):  # pragma: no cover
+class MvcApi(Provider):  # pragma: no cover
 
     def __init__(self, chain: Chain = Chain.MAIN, url: Optional[str] = None, headers: Optional[Dict] = None,
                  timeout: Optional[int] = None, token: Optional[str] = None, client_key: Optional[str] = None):
         if chain == Chain.MAIN:
-            default_url = 'https://api-mvc.metasv.com'
+            default_url = 'https://mainnet.mvcapi.com'
         else:
-            default_url = 'https://api-mvc-testnet.metasv.com'
+            default_url = 'https://testnet.mvcapi.com'
         self.url = url or default_url
         super().__init__(chain, headers, timeout)
-        self.token = token or METASV_TOKEN
-        self.client_key = client_key or METASV_CLIENT_KEY
+        self.token = token or MVCAPI_TOKEN
+        self.client_key = client_key or MVCAPI_CLIENT_KEY
 
     def _get_unspents(self, address: str, flag: Optional[str] = None) -> Union[Dict, List[Dict]]:
         with suppress(Exception):
@@ -108,9 +108,9 @@ class MetaSV(Provider):  # pragma: no cover
         return xpub, xprv
 
     def get_xpub_unspents(self, **kwargs) -> List[Dict]:
-        assert self.token or self.client_key, 'MetaSV service requires a token or a client key'
+        assert self.token or self.client_key, 'MVCAPI service requires a token or a client key'
         try:
-            xpub, xprv = MetaSV._parse_xkey(**kwargs)
+            xpub, xprv = MvcApi._parse_xkey(**kwargs)
             path = f'/xpubLite/{xpub}/utxo'
             r: Dict = self.get(url=f'{self.url}{path}', headers=self.parse_headers(path))
             unspents: List[Dict] = []
@@ -127,9 +127,9 @@ class MetaSV(Provider):  # pragma: no cover
         return []
 
     def get_xpub_balance(self, **kwargs) -> int:
-        assert self.token or self.client_key, 'MetaSV service requires a token or a client key'
+        assert self.token or self.client_key, 'MVCAPI service requires a token or a client key'
         try:
-            xpub, xprv = MetaSV._parse_xkey(**kwargs)
+            xpub, xprv = MvcApi._parse_xkey(**kwargs)
             path = f'/xpubLite/{xpub}/balance'
             r: Dict = self.get(url=f'{self.url}{path}', headers=self.parse_headers(path))
             return r.get('balance')

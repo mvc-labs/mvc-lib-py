@@ -11,8 +11,8 @@ HTTP_REQUEST_TIMEOUT: int = int(os.getenv('MVCLIB_HTTP_REQUEST_TIMEOUT') or 3)
 THREAD_POOL_MAX_EXECUTORS: int = int(os.getenv('MVCLIB_THREAD_POOL_MAX_EXECUTORS') or 10)
 BIP39_ENTROPY_BIT_LENGTH: int = int(os.getenv('MVCLIB_BIP39_ENTROPY_BIT_LENGTH') or 128)
 BIP44_DERIVATION_PATH = os.getenv('MVCLIB_BIP44_DERIVATION_PATH') or "m/44'/10001'/0'"
-METASV_TOKEN: Optional[str] = os.getenv('MVCLIB_METASV_TOKEN') or os.getenv('METASV_TOKEN')
-METASV_CLIENT_KEY: Optional[str] = os.getenv('MVCLIB_METASV_CLIENT_KEY') or os.getenv('METASV_CLIENT_KEY')
+MVCAPI_TOKEN: Optional[str] = os.getenv('MVCLIB_MVCAPI_TOKEN') or os.getenv('MVCAPI_TOKEN')
+MVCAPI_CLIENT_KEY: Optional[str] = os.getenv('MVCLIB_MVCAPI_CLIENT_KEY') or os.getenv('MVCAPI_CLIENT_KEY')
 
 
 class Chain(str, Enum):

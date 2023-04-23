@@ -1,6 +1,6 @@
 from typing import List, Dict, Optional
 
-from .metasv import MetaSV
+from .mvcapi import MvcApi
 from .provider import Provider, BroadcastResult
 from ..constants import Chain
 
@@ -12,7 +12,7 @@ class Service:
             self.provider = provider
         else:
             chain = chain or Chain.MAIN
-            self.provider = MetaSV(chain=chain)
+            self.provider = MvcApi(chain=chain)
         self.chain = self.provider.chain
 
     def get_unspents(self, **kwargs) -> List[Dict]:
